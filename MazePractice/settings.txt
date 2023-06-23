@@ -1,0 +1,35 @@
+Size of each pixel = 2
+Speed of player = 20
+Dark Mode = True
+Fast Load = False
+Fullscreen = True
+Cheats = True
+
+Fast Load makes it so that you can't color the board.
+
+!!WARNING!!
+Keep the frases the same for the settings above otherwise the code will break, just change the number value!
+Here they are again so that you can copy-paste them if anything happens!
+----------------------
+Size of each pixel = 8
+Speed of player = 20
+----------------------
+
+ALSO MAKE SURE TO RUN CTRL + S ON THE TXT FILE AFTER EDITING IT TO SAVE THE NEW VALUES.
+
+
+
+The higher the number for the speed of the player, the faster the player moves,
+and the smaller the pixel size, the more pixels can fit on the board meaning that your maze will be larger
+The cheats allows you to see the path from you to the end and allows you to see a colored diagram of the maze showing which points are the farthest away from the start.
+
+Controls:
+WASD to control character which is blue
+
+If cheats are enabled,
+'r' - shows you the solution of the maze
+'z' - shows you the distances certain parts of the maze are away from you (Darker = farther away except for pink which is the farthest away)
+
+When the maze is loading you can watch it being made, and after it is made there will be a loading
+period where you will be looking at a gray screen, just give the maze some time to load the color map.
+If you don't want the color map turn on fast load.
