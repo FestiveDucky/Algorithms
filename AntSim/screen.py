@@ -12,100 +12,62 @@ class Tile(pygame.sprite.Sprite):
         super().__init__(group)
         self.coords = coords
         self.scale = scale
-        self.agent = False
-        self.new_agent = False
-        self.removal = False
-
-        # Plain
-        self.color = 0
-
-        # Gradient
-        # self.color = (coords[0] + coords[1], coords[0] + coords[1], coords[0] + coords[1])
-
-        # Checker Board
-        # if self.coords[0] % 2 == self.coords[1] % 2:
-        #     self.color = (0, 0, 0)
-        # else:
-        #     self.color = (255, 255, 255)
-        self.new_color = None
-        # self.image = pygame.Surface((scale, scale))
-        # self.image.fill(self.color)
+        self.colorFood = 0
+        self.colorHome = 0
         self.rect = pygame.Rect(self.coords[1] * scale, self.coords[0] * scale, scale, scale)
 
-    def getColor(self):
-        return self.color
+    def update(self, screen, fullRefresh):
+        newColorFood = screen.boardFood[self.coords[0]][self.coords[1]]
+        newColorHome = screen.boardHome[self.coords[0]][self.coords[1]]
+
+        # If the new color is not significantly different than we don't update
+        if not fullRefresh and abs(self.colorFood - newColorFood) < 0.02 and abs(self.colorHome - newColorHome) < 0.02:
+            return
+
+        # Set the pixels to black if they have too little color
+        if newColorFood < 0.01:
+            screen.boardFood[self.coords[0]][self.coords[1]] = 0
+            newColorFood = 0
+        if newColorHome < 0.01:
+            screen.boardHome[self.coords[0]][self.coords[1]] = 0
+            newColorHome = 0
+
+        self.colorHome = newColorHome
+        self.colorFood = newColorFood
+        pygame.draw.rect(screen.canvas, (self.colorHome * 255, self.colorFood * 255, self.colorFood * 255), self.rect)
+
+
+class Nest(pygame.sprite.Sprite):
+    def __init__(self, group, coords, scale):
+        super().__init__(group)
+        self.coords = coords
+        self.scale = scale
+        self.storedFood = 0
+        self.rect = pygame.Rect(self.coords[1] * scale, self.coords[0] * scale, scale, scale)
 
     def update(self, screen):
-        new_color = screen.board[self.coords[0]][self.coords[1]]
-        if new_color == self.color:
-            return
-        self.color = new_color
-        if self.color < 0.0005:
-            screen.board[self.coords[0]][self.coords[1]] = 0
-        pygame.draw.rect(screen.canvas, (0, self.color * 255, self.color * 255), self.rect)
-        # if color == 1:
-        #     self.image.fill((120, 120, 120))
-        # else:
-        #     self.image.fill((color * 255, color * 255, color * 255))
-        # screen.display.blit(self.image, self.rect)
+        # Creating new agents with food
+        foodRequired = 1
+        for i in range(self.storedFood//foodRequired):
+            self.storedFood -= foodRequired
+            screen.agents.append(Agent(screen.agent_group, self.coords, screen.speed))
+
+        pygame.draw.rect(screen.canvas, (99, 49, 0), self.rect)
 
 
-    # def update(self, height, length, tiles):
-    #     self.color = self.new_color
-    #     self.image.fill(self.color)
-    #     self.new_color = None
-    #     if self.removal:
-    #         for tile in self.getSurroundingTilesCoords(height, length):
-    #             if tiles[tile].getColor() != (0, 0, 0):
-    #                 self.removal = False
-    #
-    #     if self.new_agent:
-    #         self.new_agent = False
-    #         self.agent = True
+class Food(pygame.sprite.Sprite):
+    def __init__(self, group, coords, scale, quantity):
+        super().__init__(group)
+        self.coords = coords
+        self.scale = scale
+        self.quantity = quantity
+        self.rect = pygame.Rect(self.coords[1] * scale, self.coords[0] * scale, scale, scale)
 
-    def average(self, height, length, tiles, amount):
-        r = self.color[0]
-        g = self.color[1]
-        b = self.color[2]
-
-        divisor = 1
-
-        for tile in self.getSurroundingTilesCoords(height, length):
-            divisor += 1
-            color = tiles[tile].getColor()
-
-            r += color[0]
-            g += color[1]
-            b += color[2]
-
-        new_color = (r // divisor, g // divisor, b // divisor)
-        self.new_color = ((new_color[0] + 2 * self.color[0]) // 3, (new_color[1] + 2 * self.color[1]) // 3, (new_color[2] + 2 * self.color[2]) // 3)
-
-        new_color = []
-        for color_part in self.new_color:
-            color_part -= amount
-            if color_part < 0:
-                new_color.append(0)
-            else:
-                new_color.append(color_part)
-
-        if new_color == [0, 0, 0]:
-            self.removal = True
-
-        self.new_color = tuple(new_color)
-
-    def getSurroundingTilesCoords(self, height, length):
-        y = self.coords[0]
-        x = self.coords[1]
-
-        surrTiles = []
-
-        for newy in (y - 1, y, y + 1):
-            for newx in (x - 1, x, x + 1):
-                if (newy, newx) != self.coords and height > newy > -1 and length > newx > -1:
-                    surrTiles.append((newy, newx))
-
-        return surrTiles
+    def update(self, screen):
+        if self.quantity <= 0:
+            screen.food.remove(self)
+            self.kill()
+        pygame.draw.rect(screen.canvas, (239, 155, 15), self.rect)
 
 
 class Screen:
@@ -116,61 +78,84 @@ class Screen:
         self.speed = speed
         self.tile_length = self.length // scale
         self.tile_height = self.height // scale
-        print(self.tile_height, self.tile_length)
-        self.tiles_dict = {}
         self.canvas = pygame.Surface((length, height))
-        self.board = numpy.zeros((self.tile_height, self.tile_length))
-        self.tiles_to_check_coords = []
+        self.boardFood = numpy.zeros((self.tile_height, self.tile_length))
+        self.boardHome = numpy.zeros((self.tile_height, self.tile_length))
         self.agents = []
-        self.following = None
         self.display = display
-        self.tile_group = pygame.sprite.LayeredUpdates()
         self.agent_group = pygame.sprite.Group()
+        self.food_group = pygame.sprite.Group()
+        self.food = []
+        self.nest_group = pygame.sprite.Group()
+        self.nests = []
+        self.tiles_dict = {}
+        self.tile_group = pygame.sprite.LayeredUpdates()
+        self.scale = scale
+        self.count = 0
 
+        # Create tiles
         for y in range(self.tile_height):
             for x in range(self.tile_length):
                 self.tiles_dict[(y, x)] = Tile(self.tile_group, (y, x), scale)
 
-        for agent in range(self.num_agents):
-            self.agents.append(Agent(self.agent_group, (random.randint(0, self.tile_height), random.randint(0, self.tile_length)), self.speed))
+        # Create food
+        for y in range(10):
+            for x in range(10):
+                self.food.append(Food(self.food_group, (1+y, 1+x), scale, 100))
 
-    def average(self):
-        # start = time.time()
+        for y in range(10):
+            for x in range(10):
+                self.food.append(Food(self.food_group, (y + 1, self.tile_length + x - 11), scale, 100))
+
+        # Create nest
+        for y in range(10):
+            for x in range(10):
+                self.nests.append(Nest(self.nest_group, (self.tile_height - 12 + y, self.tile_length - 120 + x), scale))
+
+        # Create agents
+        for agent in range(self.num_agents):
+            self.agents.append(Agent(self.agent_group, random.choice(self.nests).coords, self.speed))
+
+        # self.agents[1].angle = 45
+        # self.agents[1].coords = (1, 1)
+        # self.agents[1].trigCoords = (1, 1)
+        # self.agents[1].carryingFood = True
+        # Random position: (random.randint(0, self.tile_height), random.randint(0, self.tile_length))
+
+    def average(self, warp):
+        self.count += 1
         # kernel = numpy.asarray([[0.00, 0.11, 0.00],
         #                         [0.11, 0.5, 0.11],
         #                         [0.00, 0.11, 0.00]])
-        kernel = numpy.asarray([[0.00, 0.06, 0.00],
-                                [0.06, 0.7, 0.06],
-                                [0.00, 0.06, 0.00]])
+        kernel = numpy.asarray([[0.00, 0.047, 0.00],
+                                [0.047, 0.8, 0.047],
+                                [0.00, 0.047, 0.00]])
+        kernel = numpy.asarray([[0.00, 0.01, 0.00],
+                                [0.01, 0.92, 0.01],
+                                [0.00, 0.01, 0.00]])
         # kernel = numpy.asarray([[0.11, 0.11, 0.11],
         #                         [0.11, 0.11, 0.11],
         #                         [0.11, 0.11, 0.11]])
-        # kernel = numpy.asarray([[0.9]])
-        # kernel = numpy.asarray([[0.08, 0.08, 0.08, 0.08],
-        #                         [0.08, 0.08, 0.08, 0.08],
-        #                         [0.08, 0.08, 0.08, 0.08]])
-        self.board = scipy.signal.fftconvolve(self.board, kernel, 'same')
-        # self.board = numpy.array(list(map(lambda x: [round(i, 4) for i in x], scipy.signal.fftconvolve(self.board, kernel, 'same'))))
-        # print(f"Time to Average - {time.time() - start}")
-
-
+        # kernel = numpy.asarray([[0.992]])
         # start = time.time()
-        self.tile_group.update(self)
+        if self.count % 2 == 0:
+            self.boardFood = scipy.signal.fftconvolve(self.boardFood, kernel, 'same')
+            self.boardHome = scipy.signal.fftconvolve(self.boardHome, kernel, 'same')
+        # print(f"FFT Convolve: {time.time() - start}")
 
-        # Follow singular guy
-        if self.following is not None:
-            pygame.draw.rect(self.canvas, (255, 0, 0), self.tiles_dict[self.agents[self.following].coords].rect)
+        start = time.time()
+        # Draw all of the tiles to the screen
+        if not warp:
+            self.tile_group.update(self, self.count % 300 == 0)
+        print(f"Draw Pixels: {time.time()-start}")
+        # #2 TODO subdivide screen and decide on which pixels to update
+        # #1.5 Try just predicting which cells will become blended and just add those to the update list
 
-
+        self.food_group.update(self)
+        self.nest_group.update(self)
 
         self.display.blit(self.canvas, (0, 0))
-        # print(f"Time to Update - {time.time() - start}")
+        print(len(self.agents))
 
     def move(self):
         self.agent_group.update(self)
-
-    def getTiles(self):
-        return self.tiles_dict
-
-    def getActiveCoords(self):
-        return self.tiles_to_check_coords

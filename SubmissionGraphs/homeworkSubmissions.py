@@ -7,12 +7,11 @@ month = {"Jun": 6, "Jul": 7}
 
 def toUnix(vals):
     hours = int(vals[3].split(":")[0])
-    # FIX 12 am and pom
     if ("PM" in vals[3] and "12" not in vals[3]) or ("12" in vals[3] and "AM" in vals[3]):
         hours += 12
     if hours == 24:
         hours = 0
-    # print(len(vals[3]))
+
     if len(vals[3]) == 6:
         minutes = int(vals[3][2:4])
     else:
@@ -29,5 +28,6 @@ for i in range(count):
 
 data = sorted(data)
 plt.plot(data, range(count + 2))
-plt.ylabel("Times")
+plt.ylabel("Number of Submissions")
+plt.xlabel("Unix Time")
 plt.show()

@@ -53,6 +53,7 @@ class Agent(pygame.sprite.Sprite):
                     # print(screen.board[values[i][3][0]][values[i][3][1]], values[i][3], values[i][1])
                     if best is None:
                         best = i
+                    # Change greater than to less than to cause following or running
                     elif screen.board[values[i][3][0]][values[i][3][1]] > screen.board[values[best][3][0]][values[best][3][1]]:
                         best = i
                     elif screen.board[values[i][3][0]][values[i][3][1]] == screen.board[values[best][3][0]][values[best][3][1]]:

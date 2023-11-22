@@ -25,7 +25,7 @@ if __name__ == '__main__':
     fullscreen = True
     raspberrypi = False
     move = False
-    agents = 4000
+    agents = 2000
     scale = 8
 
     pygame.display.set_caption("Slime Simulation")

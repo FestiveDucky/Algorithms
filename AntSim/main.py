@@ -1,34 +1,28 @@
 import os
 import time
 
+import pygame
+
 from screen import *
 
-# TODO add a follow mechanism and add cooler color stuff
 
-
-def tick():
-    # start = time.time()
+def tick(w):
     screen.move()
-    # print(f"Move Time - {time.time() - start}")
-
-    # start = time.time()
-    screen.average()
-    # print(f"Blur Time - {time.time() - start}")
-
+    screen.average(w)
 
     # time.sleep(1)
 
-
+# TODO possibly try adding movement that just randomly chooses the "brightest" pixel in front of it
 if __name__ == '__main__':
     pygame.init()
 
     fullscreen = True
     raspberrypi = False
     move = False
-    agents = 2000
-    scale = 8
+    agents = 20000
+    scale = 10
 
-    pygame.display.set_caption("Slime Simulation")
+    pygame.display.set_caption("Ant Colony")
     clock = pygame.time.Clock()
 
     if move:
@@ -54,15 +48,17 @@ if __name__ == '__main__':
 
     color_decrease = 0
     speed = 1
-    FPS = 600
+    FPS = 60
     # 40
     gameRunning = True
 
     screen = Screen(agents, LENGTH, HEIGHT, scale, speed, gamedisplay)
     mousePressed = False
-
+    auto = True
+    warp = False
     while gameRunning:
-        clock.tick_busy_loop(FPS)
+        print("Milliseconds since last frame:", clock.tick_busy_loop(FPS))
+
         events = pygame.event.get()
         for e in events:
             if e.type == pygame.QUIT:
@@ -97,20 +93,18 @@ if __name__ == '__main__':
                         screen.following += 1
                         if screen.following > agents-1:
                             screen.following = 0
+                elif keys[pygame.K_w]:
+                    warp = not warp
                 elif keys[pygame.K_SPACE]:
                     screen.following = None
+                    auto = not auto
 
-        if mousePressed:
-            mousex, mousey = pygame.mouse.get_pos()
-            pointsClicked = screen.tile_group.get_sprites_at((mousex, mousey))
-            if len(pointsClicked) > 0:
-                screen.board[pointsClicked[0].coords[0]][pointsClicked[0].coords[1]] = 1
+        if auto:
+            start = time.time()
+            # Update Tick
+            tick(warp)
+            print(f"Time - {time.time() - start}")
 
-        start = time.time()
-        # Update Tick
-        tick()
-
-        print(f"Time - {time.time() - start}")
         # Renewing the display
         pygame.display.update()
         # gamedisplay.fill((0, 0, 0))

@@ -61,7 +61,9 @@ if __name__ == '__main__':
     else:
         WIDTH = 1000
         HEIGHT = 560
+
     SIZE = 20
+
     colorType = 0
     if move:
         x = 1920

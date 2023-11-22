@@ -1,4 +1,4 @@
-Size of each pixel = 2
+Size of each pixel = 20
 Speed of player = 20
 Dark Mode = True
 Fast Load = False
