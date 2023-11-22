@@ -19,7 +19,7 @@ if __name__ == '__main__':
     fullscreen = True
     raspberrypi = False
     move = False
-    agents = 20000
+    agents = 200
     scale = 10
 
     pygame.display.set_caption("Ant Colony")
