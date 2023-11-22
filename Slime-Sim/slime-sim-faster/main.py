@@ -1,4 +1,4 @@
-import os
+import os, ctypes
 import time
 
 from screen import *
@@ -25,8 +25,8 @@ if __name__ == '__main__':
     fullscreen = True
     raspberrypi = False
     move = False
-    agents = 4000
-    scale = 8
+    agents = 500
+    scale = 25
 
     pygame.display.set_caption("Slime Simulation")
     clock = pygame.time.Clock()
@@ -36,9 +36,9 @@ if __name__ == '__main__':
     if not raspberrypi:
 
         if fullscreen:
-
-            LENGTH = 1920
-            HEIGHT = 1080
+            ctypes.windll.user32.SetProcessDPIAware()
+            LENGTH = 2880
+            HEIGHT = 1800
             gamedisplay = pygame.display.set_mode((LENGTH, HEIGHT), pygame.FULLSCREEN)
         else:
 

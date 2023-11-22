@@ -1,3 +1,5 @@
+import ctypes
+
 import pygame, os, sys
 from random import choice as ch
 from colorMap import *
@@ -45,7 +47,7 @@ if __name__ == '__main__':
     colorize = False
     display = True
     borderless = True
-    fullscreen = False
+    fullscreen = True
     move = False
 
     # Titles the game
@@ -53,12 +55,13 @@ if __name__ == '__main__':
     clock = pygame.time.Clock()
     # For right now I will keep width and height at 1000 x 560 but we can change it later
     if fullscreen:
-        WIDTH = 1920
-        HEIGHT = 1080
+        ctypes.windll.user32.SetProcessDPIAware()
+        WIDTH = 2880
+        HEIGHT = 1800
     else:
         WIDTH = 1000
         HEIGHT = 560
-    SIZE = 40
+    SIZE = 20
     colorType = 0
     if move:
         x = 1920

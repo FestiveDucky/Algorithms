@@ -376,7 +376,7 @@ class Curve:
                 r = curve.curvatureRadius(i / self.precision)
                 d1 = curve.firstDerivative(i / self.precision)
                 if r is not None:
-                    d1 = (d1[1] + p[0], -d1[0] + p[1])
+                    d1 = (-d1[1] + p[0], d1[0] + p[1])
                     d = r / math.dist(p, d1)
                     p1 = ((1 - d) * p[0] + d * d1[0], (1 - d) * p[1] + d * d1[1])
                     pygame.draw.circle(self.display, LINE_COLOR, p1, abs(r), width=1)

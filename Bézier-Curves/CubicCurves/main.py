@@ -1,4 +1,4 @@
-import pygame, os, sys, time, pygame.gfxdraw
+import pygame, os, sys, time, pygame.gfxdraw, ctypes
 from drawing import *
 from random import randint as ri
 
@@ -14,8 +14,11 @@ if __name__ == '__main__':
     clock = pygame.time.Clock()
 
     if fullscreen:
-        WIDTH = 1920
-        HEIGHT = 1080
+        ctypes.windll.user32.SetProcessDPIAware()
+        WIDTH = 2880
+        HEIGHT = 1800
+        # WIDTH = 1920
+        # HEIGHT = 1080
     else:
         WIDTH = 1001
         HEIGHT = 560
