@@ -13,7 +13,6 @@ def tick(w):
     # time.sleep(1)
 
 # TODO possibly try adding movement that just randomly chooses the "brightest" pixel in front of it
-# Test Commit
 if __name__ == '__main__':
     pygame.init()
 
