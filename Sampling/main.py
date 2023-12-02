@@ -1,4 +1,4 @@
-import pygame, os, sys, time, cv2
+import pygame, os, sys, time, cv2, ctypes
 from random import choice as ch
 from poissicDisc import *
 
@@ -13,12 +13,12 @@ def redrawMap(points, SIZE, thickness, gamedisplay):
 # TODO add image export
 if __name__ == '__main__':
     run_voronoi = True
-    load_image = True
+    load_image = False
     fullscreen = True
     move = True
 
     if load_image:
-        image = cv2.imread("Screenshot_1.png")
+        image = cv2.imread(r"C:\Users\alexr\Documents\GitHub\Algorithms\Sampling\Bunny.jpg")
         print(image.shape)
     else:
         image = None
@@ -28,8 +28,9 @@ if __name__ == '__main__':
     clock = pygame.time.Clock()
 
     if fullscreen:
-        WIDTH = 1920
-        HEIGHT = 1080
+        ctypes.windll.user32.SetProcessDPIAware()
+        WIDTH = 2880
+        HEIGHT = 1800
     else:
         WIDTH = 1001
         HEIGHT = 560
@@ -38,8 +39,8 @@ if __name__ == '__main__':
 
     pointRadius = 2
     thickness = 2
-    innerCircleRadius = 3
-    outerCircleRadius = 4
+    innerCircleRadius = 20
+    outerCircleRadius = 30
     candidateSamples = 10
     border_point_radius = 80
     border_points = None
