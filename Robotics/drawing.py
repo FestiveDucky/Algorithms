@@ -3,11 +3,10 @@ from constants import *
 from button import *
 import pygame, pygame.gfxdraw, time
 
+
 # colors = [(230, 25, 75), (245, 130, 48), (255, 225, 25), (210, 245, 60), (60, 180, 75), (70, 240, 240), (0, 130, 200),
 #           (145, 30, 180),
 #           (240, 50, 230)]
-
-
 
 
 class Point(pygame.sprite.Sprite):
@@ -15,8 +14,8 @@ class Point(pygame.sprite.Sprite):
         super().__init__(group)
         self.coords = coords
         self.selected = False
-        self.size = 40
-        self.rect = pygame.Rect(self.coords[0] - self.size/2, self.coords[1] - self.size/2, self.size, self.size)
+        self.size = (HEIGHT/72)
+        self.rect = pygame.Rect(self.coords[0] - self.size / 2, self.coords[1] - self.size / 2, self.size, self.size)
 
     def update(self, display, special=False):
         if not special:
@@ -44,7 +43,8 @@ class CubicBezierCurve:
         self.point_classes = points
         self.arcLength = 0
         # First, Second
-        self.data = {"t":[], "points": [], "firstDerivatives": [], "secondDerivatives":[], "curvatures":[], "normalVectorPoints":[]}
+        self.data = {"t": [], "points": [], "firstDerivatives": [], "secondDerivatives": [], "curvatures": [],
+                     "normalVectorPoints": []}
         self.collidesWithObstacles = False
 
         self.setNewPoints()
@@ -75,11 +75,12 @@ class CubicBezierCurve:
         return new_points[0]
 
     def animate(self, precision, drawPoints, drawCurve, drawLerps, pause, drawCircle, drawVectors,
-                             hidePoints, obstacles, redrawCurves=None, pointG=None):
+                hidePoints, obstacles, redrawCurves=None, pointG=None, tValues=None):
+        if tValues is None:
+            tValues = list(map(lambda x: x / precision, range(precision + 1)))
         if redrawCurves is None:
             redrawCurves = []
-        for i in range(precision + 1):
-            t = i / precision
+        for i, t in enumerate(tValues):
             if pause != 0:
                 events()
 
@@ -127,7 +128,7 @@ class CubicBezierCurve:
                     break
 
             if i != 0 and drawCurve:
-                drawThickLine(self.display, color, self.data["points"][i-1], self.data["points"][i])
+                drawThickLine(self.display, color, self.data["points"][i - 1], self.data["points"][i])
 
             if drawPoints:
                 pygame.draw.circle(self.display, color, p, LINE_THICKNESS)
@@ -143,7 +144,9 @@ class CubicBezierCurve:
             return self.BezierPoint(t, new_points)
         return new_points[0]
 
-    def calculateBezierCurve(self, precision, obstacles):
+    def calculateBezierCurve(self, precision, obstacles, tValues=None):
+        if tValues is None:
+            tValues = list(map(lambda x: x / precision, range(precision + 1)))
         self.data["t"] = []
         self.data["points"] = []
         self.data["firstDerivatives"] = []
@@ -152,8 +155,7 @@ class CubicBezierCurve:
         self.data["normalVectorPoints"] = []
         self.collidesWithObstacles = False
         self.arcLength = 0
-        for i in range(precision + 1):
-            t = i / precision
+        for t in tValues:
             p = self.BezierPoint(t, self.points)
 
             d1 = self.firstDerivative(t)
@@ -177,7 +179,7 @@ class CubicBezierCurve:
 
             self.data["normalVectorPoints"].append((p4, p5))
 
-            if i != 0:
+            if tValues[0] != t:
                 self.arcLength += math.dist(self.data["points"][-2], self.data["points"][-1])
 
             # Determines if the path is too close to the obstacles which would cause the bot to hit them
@@ -186,16 +188,16 @@ class CubicBezierCurve:
                     self.collidesWithObstacles = True
                     break
 
-
     def reDraw(self, ind, dC, dP):
         for i in range(ind):
             if dP:
                 pygame.draw.circle(self.display, LINE_COLOR, self.data["points"][i], LINE_THICKNESS)
             if dC:
                 if i != 0:
-                    drawThickLine(self.display, LINE_COLOR, self.data["points"][i-1], self.data["points"][i])
+                    drawThickLine(self.display, LINE_COLOR, self.data["points"][i - 1], self.data["points"][i])
 
     """Updates the point values of the curve if they were moved by the Curve class"""
+
     def setNewPoints(self):
         old_points = self.points[:]
         self.points = [point.getCoords() for point in self.point_classes]
@@ -204,6 +206,7 @@ class CubicBezierCurve:
         return True
 
     """Calculates the second derivative at a certain t value"""
+
     def secondDerivative(self, t):
         final_vector = [0, 0]
         final_vector[0] += self.points[0][0] * (-6. * t + 6)
@@ -217,6 +220,7 @@ class CubicBezierCurve:
         return tuple(final_vector)
 
     """Calculates the second derivative at a certain t value"""
+
     def firstDerivative(self, t):
         # stackoverflow.com/questions/4089443/find-the-tangent-of-a-point-on-a-bezier-curve
         final_vector = [0, 0]
@@ -229,6 +233,7 @@ class CubicBezierCurve:
         return tuple(final_vector)
 
     """Calculates the curvature at a certain t value"""
+
     def curvatureRadius(self, t):
         f = self.firstDerivative(t)
         s = self.secondDerivative(t)
@@ -249,6 +254,7 @@ class CubicBezierCurve:
             return 1. / k
 
     """Calculates the bounding box of the curve"""
+
     def boundingBox(self, draw=True, pygameRect=False):
         xRoots = self.quadraticFormula(
             -3 * self.points[0][0] + 9 * self.points[1][0] - 9 * self.points[2][0] + 3 * self.points[3][0],
@@ -312,21 +318,51 @@ class Curve:
         self.arcLength = 0
 
     """Recalculates all curve values including arc length"""
+
     def calculate(self, obstacles):
         self.arcLength = 0
         for curve in self.curves:
             curve.calculateBezierCurve(self.precision, obstacles)
             self.arcLength += curve.arcLength
 
+    def equallySpace(self, obstacles):
+        allTValues = []
+        for curve in self.curves:
+            interval = curve.arcLength / self.precision
+            manualTValues = []
+            index = 0
+            distance = 0
+            points = curve.data["points"]
+            tValues = curve.data["t"]
+            for i in range(self.precision):
+                desiredPosition = interval * i
+                while distance + math.dist(points[index], points[index + 1]) <= desiredPosition:
+                    distance += math.dist(points[index], points[index + 1])
+                    index += 1
+                change = math.dist(points[index], points[index + 1])
+                desiredChange = desiredPosition - distance
+                tInterval = tValues[index + 1] - tValues[index]
+                manualTValues.append(tValues[index] + desiredChange / change * tInterval)
+            # Account for the last point
+            manualTValues.append(1)
+            curve.calculateBezierCurve(self.precision, obstacles, tValues=manualTValues)
+            allTValues.append(manualTValues)
+        return allTValues
+
     def draw(self, drawPoints, drawCurve, drawLerps, pause, drawCircle, drawOutline, drawMidLine, drawVectors,
              drawBoundingBoxes, hidePoints, obstacles, equallySpaced):
 
         self.calculate(obstacles)
 
+        manualTValues = []
+        if equallySpaced:
+            manualTValues = self.equallySpace(obstacles)
+
         redraw_curves = []
-        for curve in self.curves:
+        for i, curve in enumerate(self.curves):
             curve.animate(self.precision, drawPoints, drawCurve, drawLerps, pause, drawCircle, drawVectors,
-                                       hidePoints, obstacles, redrawCurves=redraw_curves, pointG=self.point_group)
+                          hidePoints, obstacles, redrawCurves=redraw_curves, pointG=self.point_group,
+                          tValues=manualTValues[i] if manualTValues else None)
             redraw_curves.append(curve)
 
         if drawOutline:
@@ -367,8 +403,8 @@ class Curve:
         nextCoords = ((1 - d) * p1[0] + d * p2[0], (1 - d) * p1[1] + d * p2[1])
 
         # Makes sure that the mirrored point does not go off the screen
-        boundedCoords = (max(min(nextCoords[0], pointLimit), 0),
-                        max(min(nextCoords[1], pointLimit), 0))
+        boundedCoords = (max(min(nextCoords[0], HEIGHT), 0),
+                         max(min(nextCoords[1], HEIGHT), 0))
 
         newSelfCoords = ((1 - d) * p1[0] + d * boundedCoords[0], (1 - d) * p1[1] + d * boundedCoords[1])
 
@@ -419,38 +455,48 @@ class Curve:
 
 
 class Menu:
-    def __init__(self, display, w, h, vals):
+    def __init__(self, display, w, h, vals, size):
         self.buttons = []
         self.display = display
         self.button_group = pygame.sprite.LayeredUpdates()
-        self.size = 500
+        self.size = size
         self.w = w
         self.h = h
 
-        spread = self.size/4
+        spread = self.size / 4
         self.buttons.append(Button(self.button_group, self.display, "Draw Lerps",
-                                   (self.w - self.size + 10*(self.size/200), len(self.buttons) * spread + 20), vals[0], self.size))
+                                   (self.w - self.size + 10 * (self.size / 200), len(self.buttons) * spread + 20),
+                                   vals[0], self.size))
         self.buttons.append(Button(self.button_group, self.display, "Draw Segments",
-                                   (self.w - self.size + 10*(self.size/200), len(self.buttons) * spread + 20), vals[1], self.size))
+                                   (self.w - self.size + 10 * (self.size / 200), len(self.buttons) * spread + 20),
+                                   vals[1], self.size))
         self.buttons.append(Button(self.button_group, self.display, "Draw Mid-Line",
-                                   (self.w - self.size + 10*(self.size/200), len(self.buttons) * spread + 20), vals[2], self.size))
+                                   (self.w - self.size + 10 * (self.size / 200), len(self.buttons) * spread + 20),
+                                   vals[2], self.size))
         self.buttons.append(Button(self.button_group, self.display, "Draw Points",
-                                   (self.w - self.size + 10*(self.size/200), len(self.buttons) * spread + 20), vals[3], self.size))
+                                   (self.w - self.size + 10 * (self.size / 200), len(self.buttons) * spread + 20),
+                                   vals[3], self.size))
         self.buttons.append(Button(self.button_group, self.display, "Draw Curve",
-                                   (self.w - self.size + 10*(self.size/200), len(self.buttons) * spread + 20), vals[4], self.size))
+                                   (self.w - self.size + 10 * (self.size / 200), len(self.buttons) * spread + 20),
+                                   vals[4], self.size))
         self.buttons.append(Button(self.button_group, self.display, "Draw Circle",
-                                   (self.w - self.size + 10*(self.size/200), len(self.buttons) * spread + 20), vals[5], self.size))
+                                   (self.w - self.size + 10 * (self.size / 200), len(self.buttons) * spread + 20),
+                                   vals[5], self.size))
         self.buttons.append(Button(self.button_group, self.display, "Draw Vectors",
-                                   (self.w - self.size + 10*(self.size/200), len(self.buttons) * spread + 20), vals[6], self.size))
+                                   (self.w - self.size + 10 * (self.size / 200), len(self.buttons) * spread + 20),
+                                   vals[6], self.size))
         self.buttons.append(Button(self.button_group, self.display, "Bounding Boxes",
-                                   (self.w - self.size + 10*(self.size/200), len(self.buttons) * spread + 20), vals[7], self.size))
+                                   (self.w - self.size + 10 * (self.size / 200), len(self.buttons) * spread + 20),
+                                   vals[7], self.size))
         self.buttons.append(Button(self.button_group, self.display, "Hide Points",
-                                   (self.w - self.size + 10*(self.size/200), len(self.buttons) * spread + 20), vals[8], self.size))
-        self.buttons.append(Button(self.button_group, self.display, "Equally Space Points",
-                                   (self.w - self.size + 10 * (self.size / 200), len(self.buttons) * spread + 20), vals[9], self.size))
+                                   (self.w - self.size + 10 * (self.size / 200), len(self.buttons) * spread + 20),
+                                   vals[8], self.size))
+        self.buttons.append(Button(self.button_group, self.display, "Equidistant Points",
+                                   (self.w - self.size + 10 * (self.size / 200), len(self.buttons) * spread + 20),
+                                   vals[9], self.size))
 
         self.font = pygame.font.Font('freesansbold.ttf', int(16 * (self.size / 200)))
-        self.arcLengthTextPos = (self.w - self.size + 10*(self.size/200), len(self.buttons) * spread + 20)
+        self.arcLengthTextPos = (self.w - self.size + 10 * (self.size / 200), len(self.buttons) * spread + 20)
         self.arcLengthTextTopLeft = (self.arcLengthTextPos[0] + 20, self.arcLengthTextPos[1])
         # self.arcLengthTextTopLeft = (self.arcLengthTextPos[0] + (self.size / 20) * 4, self.arcLengthTextPos[1] + 7 * (self.size / 200))
 
@@ -458,7 +504,7 @@ class Menu:
         pygame.draw.rect(self.display, (34, 45, 56), pygame.Rect(self.w - self.size, 0, self.size, self.h))
         self.button_group.update()
 
-        arcLengthText = self.font.render(f"Path Length: {round(arcLength/PPI, 3)}", True, (240, 240, 240))
+        arcLengthText = self.font.render(f"Path Length: {round(arcLength / PPI, 3)}", True, (240, 240, 240))
         arcLengthTextRect = arcLengthText.get_rect()
         arcLengthTextRect.topleft = self.arcLengthTextTopLeft
         self.display.blit(arcLengthText, arcLengthTextRect)

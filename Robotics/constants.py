@@ -1,29 +1,48 @@
-import pygame
+import pygame,ctypes
+from PIL import Image
 from math import *
 import pygame.gfxdraw
 
-fullscreen = True
-move = False
+pygame.init()
 
+fullscreen = False
+
+# Automatically resizes everything for you
+ctypes.windll.user32.SetProcessDPIAware()
+WIDTH, HEIGHT = pygame.display.list_modes()[0]
+WIDTH, HEIGHT = 1170, 900
+
+# Will bug out on a resolution with a ratio less than 1.3:1
+
+image = Image.open('VEXOverUnder.png')
+new_image = image.resize((HEIGHT, HEIGHT))
+new_image.save(f'VEXOverUnder_{HEIGHT}.png')
+
+if fullscreen:
+    gamedisplay = pygame.display.set_mode((WIDTH, HEIGHT), pygame.FULLSCREEN)
+else:
+    gamedisplay = pygame.display.set_mode((WIDTH, HEIGHT))
+
+bg = pygame.transform.smoothscale(pygame.image.load(f"VEXOverUnder_{HEIGHT}.png").convert(), (HEIGHT, HEIGHT))
+
+# Constants
 FIELD_DIMENSION = 12
 # Convert it into inches
 FIELD_DIMENSION *= 12
 # IMAGE MUST BE A SQUARE
-BGLENGTH = 1800
 
 # Pixels per inch
-PPI = BGLENGTH / FIELD_DIMENSION
+PPI = HEIGHT / FIELD_DIMENSION
 TRACKWIDTH = 18
 WHEELRADIUS = 1
-pointLimit = BGLENGTH
-precision = 100
+precision = 10
 # speed = 0
 speed = 0.005
 
 colors = [(217, 15, 73), (182, 158, 60), (13, 192, 128)]
 
 LINE_COLOR = (42, 150, 204)
-LINE_THICKNESS = 4
+LINE_THICKNESS = HEIGHT/720
 
 
 def pointOnLine(p1, p2, t):

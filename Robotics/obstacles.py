@@ -2,6 +2,7 @@ import pygame.sprite
 
 from constants import *
 
+
 # TODO make obstacles be saved to file and load/update file automatically, ignore last obstacle if we have odd number
 class Obstacle(pygame.sprite.Sprite):
     def __init__(self, group, p1, p2):
@@ -29,7 +30,6 @@ class Obstacle(pygame.sprite.Sprite):
                 return True
             return False
 
-
         xInter = (b1 - b2) / (m2 - m1)
         yInter = xInter * m1 + b1
 
@@ -44,7 +44,7 @@ class Obstacle(pygame.sprite.Sprite):
             return True
         return False
 
-    def update(self,display):
+    def update(self, display):
         drawThickLine(display, (255, 0, 0), self.p1, self.p2)
 
 
